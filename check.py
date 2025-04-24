@@ -2,16 +2,26 @@ import subprocess
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from dotenv import load_dotenv
 import requests
 from bs4 import BeautifulSoup
-import os
+import re
 
-# Load environment variables
-load_dotenv()
-EMAIL_SENDER = os.getenv("EMAIL_SENDER")
-EMAIL_PASS = os.getenv("EMAIL_PASSWORD")
-EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
+def get_email_credentials():
+    while True:
+        sender = input("Enter your UBS email address: ")
+        if not sender.endswith('@ubs.com'):
+            print("❌ Error: Please enter a valid UBS email address (@ubs.com)")
+            continue
+        
+        receiver = input("Enter recipient's UBS email address: ")
+        if not receiver.endswith('@ubs.com'):
+            print("❌ Error: Please enter a valid UBS email address (@ubs.com)")
+            continue
+            
+        password = input("Enter your email password: ")
+        smtp_server = input("Enter SMTP server address (e.g., smtp.ubs.com): ")
+        
+        return sender, receiver, password, smtp_server
 
 
 def check_installed_updates():
@@ -108,7 +118,7 @@ def generate_html_report(updates):
     return html_body
 
 
-def send_email(subject, html_body, sender, receiver):
+def send_email(subject, html_body, sender, receiver, password, smtp_server):
     msg = MIMEMultipart("alternative")
     msg['Subject'] = subject
     msg['From'] = sender
@@ -118,9 +128,11 @@ def send_email(subject, html_body, sender, receiver):
     msg.attach(html_part)
 
     try:
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        SMTP_PORT = 587  # Common port for TLS
+
+        with smtplib.SMTP(smtp_server, SMTP_PORT) as server:
             server.starttls()
-            server.login(sender, EMAIL_PASS)
+            server.login(sender, password)
             server.sendmail(sender, receiver, msg.as_string())
         print("✅ Email sent successfully!")
     except Exception as e:
@@ -128,10 +140,14 @@ def send_email(subject, html_body, sender, receiver):
 
 
 if __name__ == "__main__":
-    print("🔍 Checking installed updates...")
+    print("📧 Email Configuration")
+    print("-" * 50)
+    sender, receiver, password, smtp_server = get_email_credentials()
+    
+    print("\n🔍 Checking installed updates...")
     raw_output = check_installed_updates()
     parsed_updates = parse_updates(raw_output)
     html_report = generate_html_report(parsed_updates)
 
     print("📤 Sending update report via email...")
-    send_email("🖥️ Windows Patch Report", html_report, EMAIL_SENDER, EMAIL_RECEIVER)
+    send_email("🖥️ Windows Patch Report", html_report, sender, receiver, password, smtp_server)
