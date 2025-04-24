@@ -17,10 +17,9 @@ def get_email_credentials():
             print("❌ Error: Please enter a valid UBS email address (@ubs.com)")
             continue
             
-        password = input("Enter your email password: ")
         smtp_server = input("Enter SMTP server address (e.g., smtp.ubs.com): ")
         
-        return sender, receiver, password, smtp_server
+        return sender, receiver, smtp_server
 
 
 def check_installed_updates():
@@ -117,7 +116,7 @@ def generate_html_report(updates):
     return html_body
 
 
-def send_email(subject, html_body, sender, receiver, password, smtp_server):
+def send_email(subject, html_body, sender, receiver, smtp_server):
     msg = MIMEMultipart("alternative")
     msg['Subject'] = subject
     msg['From'] = sender
@@ -131,7 +130,6 @@ def send_email(subject, html_body, sender, receiver, password, smtp_server):
 
         with smtplib.SMTP(smtp_server, SMTP_PORT) as server:
             server.starttls()
-            server.login(sender, password)
             server.sendmail(sender, receiver, msg.as_string())
         print("✅ Email sent successfully!")
     except Exception as e:
@@ -141,7 +139,7 @@ def send_email(subject, html_body, sender, receiver, password, smtp_server):
 if __name__ == "__main__":
     print("📧 Email Configuration")
     print("-" * 50)
-    sender, receiver, password, smtp_server = get_email_credentials()
+    sender, receiver, smtp_server = get_email_credentials()
     
     print("\n🔍 Checking installed updates...")
     raw_output = check_installed_updates()
@@ -149,4 +147,4 @@ if __name__ == "__main__":
     html_report = generate_html_report(parsed_updates)
 
     print("📤 Sending update report via email...")
-    send_email("🖥️ Windows Patch Report", html_report, sender, receiver, password, smtp_server)
+    send_email("🖥️ Windows Patch Report", html_report, sender, receiver, smtp_server)
